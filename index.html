@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>vLLM 显存计算器</title>
+    <style>
+        :root {
+            --p: #4f46e5;
+            --bg: #f8fafc;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg);
+            padding: 20px;
+            color: #1e293b;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--p);
+        }
+
+        button {
+            background: var(--p);
+            color: white;
+            border: none;
+            padding: 0 25px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #4338ca;
+        }
+
+        button:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .tags {
+            display: flex;
+            gap: 8px;
+            margin: 15px 0;
+            min-height: 24px;
+        }
+
+        .tag {
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: bold;
+        }
+
+        .tag.moe {
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .tag.mla {
+            background: #f0fdf4;
+            color: #15803d;
+        }
+
+        .tag.fp8 {
+            background: #fffbeb;
+            color: #b45309;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .box {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            transition: 0.2s;
+        }
+
+        .box:focus-within {
+            border-color: #cbd5e1;
+            background: #fff;
+        }
+
+        label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #64748b;
+            margin-bottom: 5px;
+        }
+
+        select,
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+            box-sizing: border-box;
+            background: white;
+        }
+
+        /* 大号参数量输入框 */
+        .big-input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--p);
+            outline: none;
+            padding: 0;
+        }
+
+        /* 去掉数字输入框的小箭头(可选) */
+        /* input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; } */
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #eef2ff;
+            border-radius: 12px;
+            border: 1px solid #c7d2fe;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .bar-con {
+            height: 24px;
+            background: #e2e8f0;
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+            margin: 15px 0;
+        }
+
+        .bar {
+            height: 100%;
+            transition: width 0.2s ease-out;
+        }
+
+        /* 加快动画响应 */
+        .err {
+            color: #dc2626;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        /* 多卡显示样式 */
+        .gpu-card {
+            margin-top: 20px;
+            padding: 20px;
+            background: #eef2ff;
+            border-radius: 12px;
+            border: 1px solid #c7d2fe;
+        }
+
+        .gpu-card-title {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--p);
+            margin-bottom: 15px;
+        }
+
+        #multi_gpu_result {
+            margin-top: 30px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card">
+        <h2 style="color:var(--p); margin-top:0;">vLLM 显存计算器</h2>
+
+        <div class="input-group">
+            <input type="text" id="modelId" placeholder="输入HF模型ID" value="Qwen/Qwen3-4B-Instruct-2507" style="flex: 1;">
+            <button onclick="fetchData()" id="btnFetch">查询</button>
+        </div>
+        <div id="errorBox" class="err"></div>
+
+        <div id="mainUI" style="opacity: 0.5; pointer-events: none; transition: opacity 0.3s;">
+            <div class="tags" id="tagArea"></div>
+
+            <div class="grid">
+                <div class="box">
+                    <label>总参数量 (Billion) - 可编辑</label>
+                    <div style="display:flex; align-items:baseline;">
+                        <input type="number" id="disp_params" class="big-input" value="0" step="0.01">
+                        <span style="font-weight:bold; color:var(--p)">B</span>
+                    </div>
+                </div>
+                <div class="box">
+                    <label>权重精度</label>
+                    <select id="precision">
+                        <!-- 选项将从后端动态加载 -->
+                    </select>
+                </div>
+                <div class="box">
+                    <label>Context Length</label>
+                    <select id="ctx_len">
+                        <!-- 选项将从后端动态加载 -->
+                    </select>
+                </div>
+                <div class="box">
+                    <label>Max Num Seqs (启动预留)</label>
+                    <select id="max_seqs">
+                        <!-- 选项将从后端动态加载 -->
+                    </select>
+                </div>
+                <div class="box">
+                    <label>Running Batch (并发数)</label>
+                    <input type="number" id="bs" value="1" min="1">
+                </div>
+                <div class="box">
+                    <label>单卡总显存 (GB)</label>
+                    <input type="number" id="total_vram" value="80" min="1">
+                </div>
+                <div class="box">
+                    <label>Tensor Parallel (多卡部署)</label>
+                    <select id="tp_size">
+                        <!-- 选项将从后端动态加载 -->
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin: 25px 0;">
+                <button onclick="calc()"
+                    style="width: 100%; padding: 14px 30px; font-size: 1.1rem; background: var(--p); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);"
+                    onmouseover="this.style.background='#4338ca'; this.style.boxShadow='0 4px 12px rgba(79, 70, 229, 0.4)'"
+                    onmouseout="this.style.background='var(--p)'; this.style.boxShadow='0 2px 8px rgba(79, 70, 229, 0.3)'">
+                    🔄 计算显存
+                </button>
+            </div>
+
+            <div id="result_container">
+                <!-- 单卡显示 -->
+                <div class="result" id="single_gpu_result">
+                    <div class="bar-con">
+                        <div id="bw" class="bar" style="background:#3b82f6;width:0%"></div>
+                        <div id="bo" class="bar" style="background:#ef4444;width:0%"></div>
+                        <div id="bk" class="bar" style="background:#f59e0b;width:0%"></div>
+                    </div>
+                    <div class="row"><span>📦 权重</span><span id="res_w">0 GB</span></div>
+                    <div class="row" style="color:#dc2626"><span>⚙️ 预留</span><span id="res_o">0 GB</span></div>
+                    <div class="row" style="color:#d97706"><span>🧠 KV Cache</span><span id="res_k">0 GB</span></div>
+                    <div class="row" style="border-top:1px solid #ccc; padding-top:10px; font-weight:bold;">
+                        <span>⚡ 总占用</span>
+                        <span><span id="res_t">0</span> / <span id="res_limit">0</span> GB</span>
+                    </div>
+                </div>
+
+                <!-- 多卡显示 -->
+                <div id="multi_gpu_result" style="display:none;">
+                    <div id="gpu_cards_container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let G_Spec = null;
+        let G_Options = null;
+
+        // 页面加载时获取参数选项
+        async function loadOptions() {
+            try {
+                const res = await fetch('/api/get_options');
+                if (res.ok) {
+                    G_Options = await res.json();
+                    initializeOptions();
+                }
+            } catch (e) {
+                console.error('Failed to load options:', e);
+            }
+        }
+
+        // 初始化参数选项
+        function initializeOptions() {
+            if (!G_Options) return;
+
+            // 初始化精度选项
+            const precisionSelect = document.getElementById('precision');
+            precisionSelect.innerHTML = '';
+            G_Options.precision.options.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt.value;
+                option.textContent = opt.label;
+                precisionSelect.appendChild(option);
+            });
+            precisionSelect.value = G_Options.precision.default;
+
+            // 初始化上下文长度选项
+            const ctxSelect = document.getElementById('ctx_len');
+            ctxSelect.innerHTML = '';
+            G_Options.ctx_len.options.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt.value;
+                option.textContent = opt.label;
+                ctxSelect.appendChild(option);
+            });
+            ctxSelect.value = G_Options.ctx_len.default;
+
+            // 初始化 Max Num Seqs 选项
+            const maxSeqsSelect = document.getElementById('max_seqs');
+            maxSeqsSelect.innerHTML = '';
+            G_Options.max_seqs.options.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt.value;
+                option.textContent = opt.label;
+                maxSeqsSelect.appendChild(option);
+            });
+            maxSeqsSelect.value = G_Options.max_seqs.default;
+
+            // 初始化 TP 选项
+            const tpSelect = document.getElementById('tp_size');
+            tpSelect.innerHTML = '';
+            G_Options.tp_size.options.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt.value;
+                option.textContent = opt.label;
+                tpSelect.appendChild(option);
+            });
+            tpSelect.value = G_Options.tp_size.default;
+
+            // 初始化数字输入框默认值
+            document.getElementById('bs').value = G_Options.batch_size.default;
+            document.getElementById('total_vram').value = G_Options.total_vram.default;
+        }
+
+        // 页面加载时调用
+        window.addEventListener('DOMContentLoaded', loadOptions);
+
+        async function fetchData() {
+            const mid = document.getElementById('modelId').value.trim();
+            const btn = document.getElementById('btnFetch');
+            const err = document.getElementById('errorBox');
+
+            if (!mid) return;
+
+            btn.disabled = true;
+            btn.innerText = "加载中...";
+            err.innerText = "";
+
+            try {
+                const url = `/api/model_specs?model_id=${mid}`;
+
+                const res = await fetch(url);
+                if (!res.ok) {
+                    const dat = await res.json();
+                    throw new Error(dat.detail || "请求失败");
+                }
+
+                G_Spec = await res.json();
+                renderUI();
+            } catch (e) {
+                err.innerText = "❌ " + e.message;
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "查询";
+            }
+        }
+
+        function renderUI() {
+            document.getElementById('mainUI').style.opacity = '1';
+            document.getElementById('mainUI').style.pointerEvents = 'auto';
+
+            // 调试：输出完整的 G_Spec 数据
+            console.log('=== API 返回的完整模型数据 ===');
+            console.log(JSON.stringify(G_Spec, null, 2));
+            console.log('=== 调试信息结束 ===');
+
+            // 将 API 返回的参数量填入输入框
+            // 直接使用后端返回的 params_b，后端已经做了正确的计算
+            let paramsB = G_Spec.params_b || 0;
+
+            // 如果后端没有返回参数量（极少见情况），使用 calc_params_b 作为备选
+            if (!paramsB && G_Spec.calc_params_b) {
+                paramsB = G_Spec.calc_params_b;
+                console.log('使用后端计算的参数量:', paramsB, 'B');
+            }
+
+            document.getElementById('disp_params').value = paramsB;
+
+            // 自动选择精度（根据模型的实际存储格式）
+            const precisionSelect = document.getElementById('precision');
+            let selectedPrecision = "2";  // 默认 BF16
+
+            // 优先使用后端返回的 is_fp8 标志
+            if (G_Spec.is_fp8) {
+                selectedPrecision = "1";  // F8_E4M3
+            } else {
+                // 对于非 FP8 模型，默认使用 BF16（HuggingFace 上大多数模型的标准格式）
+                // 用户可以根据实际情况手动调整
+                selectedPrecision = "2";  // BF16
+            }
+
+            precisionSelect.value = selectedPrecision;
+
+            // 自动选择上下文长度（根据模型原生最大上下文长度）
+            const maxCtx = G_Spec.max_position_embeddings || 8192;  // 默认 8K
+            const ctxOptions = [
+                { value: "8192", label: "8K" },
+                { value: "32768", label: "32K" },
+                { value: "65536", label: "64K" },
+                { value: "131072", label: "128K" },
+                { value: "262144", label: "256K" }
+            ];
+            const ctxSelect = document.getElementById('ctx_len');
+
+            // 清理之前可能添加的特殊选项（保留前5个预设选项）
+            while (ctxSelect.options.length > 5) {
+                ctxSelect.remove(5);
+            }
+
+            // 检查是否需要添加特殊选项
+            const isSpecialCtx = !ctxOptions.some(opt => parseInt(opt.value) === maxCtx);
+            if (isSpecialCtx && maxCtx > 0) {
+                // 添加特殊上下文长度选项
+                const specialOption = document.createElement('option');
+                specialOption.value = maxCtx.toString();
+                specialOption.textContent = `${maxCtx.toLocaleString()} (模型原生)`;
+                ctxSelect.appendChild(specialOption);
+            }
+
+            // 选择最接近但不超过模型最大值的选项
+            let selectedCtx = "8192";
+            for (let i = 0; i < ctxOptions.length; i++) {
+                if (parseInt(ctxOptions[i].value) <= maxCtx) {
+                    selectedCtx = ctxOptions[i].value;
+                } else {
+                    break;
+                }
+            }
+            // 如果是特殊上下文长度，直接选择它
+            if (isSpecialCtx) {
+                selectedCtx = maxCtx.toString();
+            }
+            ctxSelect.value = selectedCtx;
+
+            // Tags
+            const tags = document.getElementById('tagArea');
+            tags.innerHTML = '';
+            if (G_Spec.is_moe) tags.innerHTML += `<span class="tag moe">MoE (${G_Spec.num_experts} Exp)</span>`;
+            if (G_Spec.is_mla) tags.innerHTML += `<span class="tag mla">MLA Enabled</span>`;
+            if (G_Spec.is_fp8) tags.innerHTML += `<span class="tag fp8">FP8 Config</span>`;
+            if (G_Spec.is_vl) tags.innerHTML += `<span class="tag moe" style="background:#e0f2fe;color:#0284c7">VL Model</span>`;
+
+            calc();
+        }
+
+        // 核心计算函数：调用后端 API 进行计算
+        async function calc() {
+            try {
+                // 1. 读取 DOM 值
+                const paramsB = parseFloat(document.getElementById('disp_params').value) || 0;
+                const prec = parseFloat(document.getElementById('precision').value);
+                const ctx = parseInt(document.getElementById('ctx_len').value);
+                const maxSeq = parseInt(document.getElementById('max_seqs').value);
+                const bs = parseInt(document.getElementById('bs').value) || 1;
+                const limit = parseFloat(document.getElementById('total_vram').value) || 80;
+                const tpSize = parseInt(document.getElementById('tp_size').value) || 1;
+
+                // 2. 获取模型参数
+                let hidden_size, layers, kv_heads, head_dim, is_mla, kv_lora_rank, qk_rope_dim;
+
+                if (G_Spec) {
+                    hidden_size = G_Spec.hidden_size || 4096;
+                    layers = G_Spec.layers || 32;
+                    const attn_heads = G_Spec.num_attention_heads || 32;
+                    kv_heads = G_Spec.num_key_value_heads || Math.max(1, Math.floor(attn_heads / 4));
+                    head_dim = G_Spec.head_dim || Math.floor(hidden_size / attn_heads);
+                    is_mla = G_Spec.is_mla || false;
+                    kv_lora_rank = G_Spec.kv_lora_rank || 512;
+                    qk_rope_dim = G_Spec.qk_rope_dim || 64;
+                } else {
+                    hidden_size = 4096;
+                    layers = 32;
+                    kv_heads = 8;
+                    head_dim = 128;
+                    is_mla = false;
+                    kv_lora_rank = 512;
+                    qk_rope_dim = 64;
+                }
+
+                // 3. 构建 POST 请求体
+                const requestBody = {
+                    params_b: paramsB,
+                    precision: prec,
+                    ctx_len: ctx,
+                    max_seqs: maxSeq,
+                    batch_size: bs,
+                    total_vram: limit,
+                    tp_size: tpSize,
+                    hidden_size: hidden_size,
+                    layers: layers,
+                    kv_heads: kv_heads,
+                    head_dim: head_dim,
+                    is_mla: is_mla,
+                    kv_lora_rank: kv_lora_rank,
+                    qk_rope_dim: qk_rope_dim
+                };
+
+                // 4. 调用后端 API (使用 POST)
+                const response = await fetch('/api/calculate_memory', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    throw new Error('API 请求失败');
+                }
+
+                const result = await response.json();
+
+                // 5. 根据 TP 大小切换显示模式
+                if (tpSize === 1) {
+                    // 单卡模式
+                    document.getElementById('single_gpu_result').style.display = 'block';
+                    document.getElementById('multi_gpu_result').style.display = 'none';
+
+                    // 根据状态设置卡片颜色
+                    const resultCard = document.getElementById('single_gpu_result');
+                    if (result.status === 'error') {
+                        resultCard.style.background = '#fee2e2';
+                        resultCard.style.borderColor = '#ef4444';
+                    } else if (result.status === 'warning') {
+                        resultCard.style.background = '#fef3c7';
+                        resultCard.style.borderColor = '#f59e0b';
+                    } else {
+                        resultCard.style.background = '#eef2ff';
+                        resultCard.style.borderColor = '#c7d2fe';
+                    }
+
+                    // 更新单卡显示
+                    document.getElementById('res_w').innerText = result.weights.total + " GB";
+                    document.getElementById('res_o').innerText = result.overhead.total + " GB";
+                    document.getElementById('res_k').innerText = result.kv_cache.total + " GB";
+                    document.getElementById('res_t').innerText = result.total_memory.per_gpu;
+                    document.getElementById('res_limit').innerText = result.total_vram;
+
+                    // 进度条
+                    let pw = (result.weights.total / result.total_vram) * 100;
+                    let po = (result.overhead.total / result.total_vram) * 100;
+                    let pk = (result.kv_cache.total / result.total_vram) * 100;
+
+                    document.getElementById('bw').style.width = Math.min(pw, 100) + "%";
+                    document.getElementById('bo').style.width = Math.min(po, 100) + "%";
+                    document.getElementById('bk').style.width = Math.min(pk, 100) + "%";
+                } else {
+                    // 多卡模式
+                    document.getElementById('single_gpu_result').style.display = 'none';
+                    document.getElementById('multi_gpu_result').style.display = 'block';
+
+                    // 生成多卡显示
+                    const container = document.getElementById('gpu_cards_container');
+                    container.innerHTML = '';
+
+                    // 进度条百分比
+                    let pw = (result.weights.per_gpu / result.total_vram) * 100;
+                    let po = (result.overhead.per_gpu / result.total_vram) * 100;
+                    let pk = (result.kv_cache.per_gpu / result.total_vram) * 100;
+
+                    // 根据状态设置汇总卡片颜色
+                    let summaryBgColor, summaryBorderColor, summaryTextColor, summaryTitle;
+                    if (result.status === 'error') {
+                        summaryBgColor = '#fee2e2';
+                        summaryBorderColor = '#ef4444';
+                        summaryTextColor = '#991b1b';
+                        summaryTitle = `📊 多卡部署汇总 (TP=${tpSize}) ⚠️ ${result.status_text}`;
+                    } else if (result.status === 'warning') {
+                        summaryBgColor = '#fef3c7';
+                        summaryBorderColor = '#f59e0b';
+                        summaryTextColor = '#92400e';
+                        summaryTitle = `📊 多卡部署汇总 (TP=${tpSize}) ⚠️ ${result.status_text}`;
+                    } else {
+                        summaryBgColor = '#f0fdf4';
+                        summaryBorderColor = '#86efac';
+                        summaryTextColor = '#15803d';
+                        summaryTitle = `📊 多卡部署汇总 (TP=${tpSize})`;
+                    }
+
+                    // 添加汇总卡片
+                    const summaryCard = document.createElement('div');
+                    summaryCard.className = 'gpu-card';
+                    summaryCard.style.background = summaryBgColor;
+                    summaryCard.style.borderColor = summaryBorderColor;
+                    summaryCard.innerHTML = `
+                    <div class="gpu-card-title" style="color:${summaryTextColor};">${summaryTitle}</div>
+                    <div class="row" style="font-size:1.2rem; font-weight:bold; color:${summaryTextColor};">
+                        <span>🎮 GPU 数量</span>
+                        <span>${tpSize} 张</span>
+                    </div>
+                    <div class="row" style="font-size:1.1rem;">
+                        <span>💾 每卡显存占用</span>
+                        <span>${result.total_memory.per_gpu} GB / ${result.total_vram} GB</span>
+                    </div>
+                    <div class="row" style="font-size:1.1rem;">
+                        <span>📦 每卡权重</span>
+                        <span>${result.weights.per_gpu} GB</span>
+                    </div>
+                    <div class="row" style="font-size:1.1rem;">
+                        <span>⚙️ 每卡预留</span>
+                        <span>${result.overhead.per_gpu} GB</span>
+                    </div>
+                    <div class="row" style="font-size:1.1rem;">
+                        <span>🧠 每卡 KV Cache</span>
+                        <span>${result.kv_cache.per_gpu} GB</span>
+                    </div>
+                    <div class="row" style="border-top:2px solid ${summaryBorderColor}; padding-top:10px; margin-top:10px; font-size:1.2rem; font-weight:bold; color:${summaryTextColor};">
+                        <span>⚡ 总显存占用</span>
+                        <span>${result.total_memory.total} GB</span>
+                    </div>
+                    <div class="row" style="font-size:0.9rem; color:#64748b; margin-top:5px;">
+                        <span>💡 利用率</span>
+                        <span style="color:${summaryTextColor}; font-weight:bold;">${result.utilization}%</span>
+                    </div>
+                `;
+                    container.appendChild(summaryCard);
+
+                    // 统一显示方式：所有多卡配置都显示汇总信息和一个示例卡片
+                    const exampleCard = document.createElement('div');
+                    exampleCard.className = 'gpu-card';
+
+                    // 根据状态设置示例卡片颜色
+                    if (result.status === 'error') {
+                        exampleCard.style.background = '#fee2e2';
+                        exampleCard.style.borderColor = '#ef4444';
+                    } else if (result.status === 'warning') {
+                        exampleCard.style.background = '#fef3c7';
+                        exampleCard.style.borderColor = '#f59e0b';
+                    }
+
+                    exampleCard.innerHTML = `
+                    <div class="gpu-card-title">🎮 单卡示例 (每张卡相同配置)</div>
+                    <div class="bar-con">
+                        <div class="bar" style="background:#3b82f6;width:${Math.min(pw, 100)}%"></div>
+                        <div class="bar" style="background:#ef4444;width:${Math.min(po, 100)}%"></div>
+                        <div class="bar" style="background:#f59e0b;width:${Math.min(pk, 100)}%"></div>
+                    </div>
+                    <div class="row"><span>📦 权重</span><span>${result.weights.per_gpu} GB</span></div>
+                    <div class="row" style="color:#dc2626"><span>⚙️ 预留</span><span>${result.overhead.per_gpu} GB</span></div>
+                    <div class="row" style="color:#d97706"><span>🧠 KV Cache</span><span>${result.kv_cache.per_gpu} GB</span></div>
+                    <div class="row" style="border-top:1px solid #ccc; padding-top:10px; font-weight:bold;">
+                        <span>⚡ 总占用</span>
+                        <span>${result.total_memory.per_gpu} / ${result.total_vram} GB</span>
+                    </div>
+                `;
+                    container.appendChild(exampleCard);
+                }
+
+                // 调试信息
+                console.log('=== 显存计算结果 (来自后端) ===');
+                console.log(result);
+                console.log('=== 调试信息结束 ===');
+
+            } catch (error) {
+                console.error('calc() error:', error);
+            }
+        }
+    </script>
+
+</body>
+
+</html>
