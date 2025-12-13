@@ -189,6 +189,11 @@ def get_model_specs(model_id: str, token: Optional[str] = None):
 async def read_root():
     return FileResponse("index.html")
 
+# 提供 robots.txt 文件
+@app.get("/robots.txt")
+async def read_robots():
+    return FileResponse("robots.txt", media_type="text/plain")
+
 # 兼容前端的 API 端点
 @app.get("/api/fetch_config")
 def fetch_config(model_id: str, token: Optional[str] = None):
