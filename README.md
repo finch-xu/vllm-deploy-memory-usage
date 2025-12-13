@@ -186,7 +186,7 @@ docker-compose restart
 
 ## 许可证
 
-MIT License
+Apache-2.0 license
 
 ## 贡献
 
