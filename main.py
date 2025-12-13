@@ -16,6 +16,13 @@ from fastapi.responses import FileResponse
 load_dotenv()
 SERVER_HF_TOKEN = os.getenv("HF_TOKEN")
 
+# 解析 CORS 允许的域名
+cors_allow_origins_str = os.getenv("CORS_ALLOW_ORIGINS", "")
+if cors_allow_origins_str:
+    cors_allow_origins = [origin.strip() for origin in cors_allow_origins_str.split(",") if origin.strip()]
+else:
+    cors_allow_origins = ["*"] # 默认允许所有来源
+
 # Pydantic 模型定义
 class CalculateMemoryRequest(BaseModel):
     params_b: float
@@ -40,7 +47,7 @@ app.mount("/static", StaticFiles(directory="."), name="static")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_allow_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )

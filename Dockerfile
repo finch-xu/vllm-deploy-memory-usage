@@ -13,6 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 复制应用代码和静态文件
 COPY main.py .
 COPY index.html .
+COPY robots.txt .
 
 # 暴露端口
 EXPOSE 8018
