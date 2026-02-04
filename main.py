@@ -39,6 +39,7 @@ class CalculateMemoryRequest(BaseModel):
     is_mla: bool = False
     kv_lora_rank: int = 512
     qk_rope_dim: int = 64
+    kv_cache_dtype: float = 2  # KV Cache 精度：2=FP16/BF16, 1=FP8
 
 app = FastAPI()
 
@@ -267,6 +268,15 @@ def get_options():
                 {"value": "128", "label": "128 GPUs (TP=128)"}
             ],
             "default": "1"
+        },
+        "kv_cache_dtype": {
+            "options": [
+                {"value": "2", "label": "auto (FP16/BF16, 2 Bytes)"},
+                {"value": "1", "label": "fp8 (FP8, 1 Byte)"},
+                {"value": "1.1", "label": "fp8_e4m3 (1 Byte)"},
+                {"value": "1.2", "label": "fp8_e5m2 (1 Byte)"}
+            ],
+            "default": "2"
         }
     }
 
@@ -301,13 +311,16 @@ def calculate_memory(request: CalculateMemoryRequest):
     oGB = base + act_factor
 
     # 3. 计算 KV Cache
+    # kv_cache_dtype: 2=FP16/BF16, 1/1.1/1.2=FP8 (取整数部分作为字节数)
+    kv_dtype_bytes = int(request.kv_cache_dtype)
+
     if request.is_mla:
         # MLA 压缩逻辑
         elem_size = request.kv_lora_rank + request.qk_rope_dim
-        kv_bytes = request.layers * elem_size * 2 * request.ctx_len * request.batch_size
+        kv_bytes = request.layers * elem_size * kv_dtype_bytes * request.ctx_len * request.batch_size
     else:
-        # 标准 GQA 逻辑
-        kv_bytes = 2 * request.layers * request.kv_heads * request.head_dim * 2 * request.ctx_len * request.batch_size
+        # 标准 GQA 逻辑: 2(K+V) * layers * kv_heads * head_dim * dtype_bytes * ctx_len * batch_size
+        kv_bytes = 2 * request.layers * request.kv_heads * request.head_dim * kv_dtype_bytes * request.ctx_len * request.batch_size
 
     kGB_total = kv_bytes / (1024**3)
 

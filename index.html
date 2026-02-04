@@ -304,6 +304,12 @@
                         <!-- 选项将从后端动态加载 -->
                     </select>
                 </div>
+                <div class="box">
+                    <label>KV Cache Dtype (--kv-cache-dtype)</label>
+                    <select id="kv_cache_dtype">
+                        <!-- 选项将从后端动态加载 -->
+                    </select>
+                </div>
             </div>
 
             <div style="margin: 25px 0;">
@@ -404,6 +410,17 @@
                 tpSelect.appendChild(option);
             });
             tpSelect.value = G_Options.tp_size.default;
+
+            // 初始化 KV Cache Dtype 选项
+            const kvCacheDtypeSelect = document.getElementById('kv_cache_dtype');
+            kvCacheDtypeSelect.innerHTML = '';
+            G_Options.kv_cache_dtype.options.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt.value;
+                option.textContent = opt.label;
+                kvCacheDtypeSelect.appendChild(option);
+            });
+            kvCacheDtypeSelect.value = G_Options.kv_cache_dtype.default;
 
             // 初始化数字输入框默认值
             document.getElementById('bs').value = G_Options.batch_size.default;
@@ -542,6 +559,7 @@
                 const bs = parseInt(document.getElementById('bs').value) || 1;
                 const limit = parseFloat(document.getElementById('total_vram').value) || 80;
                 const tpSize = parseInt(document.getElementById('tp_size').value) || 1;
+                const kvCacheDtype = parseFloat(document.getElementById('kv_cache_dtype').value) || 2;
 
                 // 2. 获取模型参数
                 let hidden_size, layers, kv_heads, head_dim, is_mla, kv_lora_rank, qk_rope_dim;
@@ -580,7 +598,8 @@
                     head_dim: head_dim,
                     is_mla: is_mla,
                     kv_lora_rank: kv_lora_rank,
-                    qk_rope_dim: qk_rope_dim
+                    qk_rope_dim: qk_rope_dim,
+                    kv_cache_dtype: kvCacheDtype
                 };
 
                 // 4. 调用后端 API (使用 POST)
