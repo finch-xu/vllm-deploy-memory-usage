@@ -1,6 +1,7 @@
 import os
-from pydantic import BaseModel
-from typing import Optional
+import re
+from pydantic import BaseModel, Field, field_validator
+from typing import Optional, Literal
 
 import uvicorn
 import requests
@@ -23,23 +24,56 @@ if cors_allow_origins_str:
 else:
     cors_allow_origins = ["*"] # 默认允许所有来源
 
+# 安全限制常量
+MAX_PARAMS_B = 10000  # 最大参数量 10T
+MAX_CTX_LEN = 2000000  # 最大上下文长度 2M
+MAX_SEQS = 10000  # 最大序列数
+MAX_BATCH = 10000  # 最大批次
+MAX_VRAM = 10000  # 最大显存 10TB
+MAX_LAYERS = 1000  # 最大层数
+MAX_HIDDEN = 100000  # 最大隐藏层大小
+VALID_PRECISION = {0.5, 1, 1.1, 2, 2.1, 4}  # 合法精度值
+VALID_TP_SIZE = {1, 2, 4, 8, 16, 32, 64, 128}  # 合法 TP 大小
+VALID_KV_DTYPE = {1, 1.1, 1.2, 2}  # 合法 KV Cache 精度
+
 # Pydantic 模型定义
 class CalculateMemoryRequest(BaseModel):
-    params_b: float
-    precision: float
-    ctx_len: int
-    max_seqs: int
-    batch_size: int
-    total_vram: float
-    tp_size: int
-    hidden_size: int = 4096
-    layers: int = 32
-    kv_heads: int = 8
-    head_dim: int = 128
+    params_b: float = Field(..., gt=0, le=MAX_PARAMS_B, description="参数量(B)")
+    precision: float = Field(..., description="精度(字节)")
+    ctx_len: int = Field(..., gt=0, le=MAX_CTX_LEN, description="上下文长度")
+    max_seqs: int = Field(..., gt=0, le=MAX_SEQS, description="最大序列数")
+    batch_size: int = Field(..., gt=0, le=MAX_BATCH, description="批次大小")
+    total_vram: float = Field(..., gt=0, le=MAX_VRAM, description="单卡显存(GB)")
+    tp_size: int = Field(..., gt=0, description="TP大小")
+    hidden_size: int = Field(4096, gt=0, le=MAX_HIDDEN, description="隐藏层大小")
+    layers: int = Field(32, gt=0, le=MAX_LAYERS, description="层数")
+    kv_heads: int = Field(8, gt=0, le=1000, description="KV头数")
+    head_dim: int = Field(128, gt=0, le=10000, description="头维度")
     is_mla: bool = False
-    kv_lora_rank: int = 512
-    qk_rope_dim: int = 64
-    kv_cache_dtype: float = 2  # KV Cache 精度：2=FP16/BF16, 1=FP8
+    kv_lora_rank: int = Field(512, ge=0, le=100000, description="KV LoRA rank")
+    qk_rope_dim: int = Field(64, ge=0, le=10000, description="QK RoPE维度")
+    kv_cache_dtype: float = Field(2, description="KV Cache精度")
+
+    @field_validator('precision')
+    @classmethod
+    def validate_precision(cls, v):
+        if v not in VALID_PRECISION:
+            raise ValueError(f'精度值必须是 {VALID_PRECISION} 之一')
+        return v
+
+    @field_validator('tp_size')
+    @classmethod
+    def validate_tp_size(cls, v):
+        if v not in VALID_TP_SIZE:
+            raise ValueError(f'TP大小必须是 {VALID_TP_SIZE} 之一')
+        return v
+
+    @field_validator('kv_cache_dtype')
+    @classmethod
+    def validate_kv_cache_dtype(cls, v):
+        if v not in VALID_KV_DTYPE:
+            raise ValueError(f'KV Cache精度必须是 {VALID_KV_DTYPE} 之一')
+        return v
 
 app = FastAPI()
 
@@ -59,12 +93,35 @@ def get_val(obj, keys, default=0):
             return obj[k]
     return default
 
+# model_id 安全验证
+MODEL_ID_PATTERN = re.compile(r'^[a-zA-Z0-9_\-\.]+/[a-zA-Z0-9_\-\.]+$')
+MAX_MODEL_ID_LEN = 200
+
+def validate_model_id(model_id: str) -> str:
+    """验证 model_id 格式，防止注入攻击"""
+    if not model_id:
+        raise HTTPException(400, "model_id 不能为空")
+
+    model_id = model_id.strip()
+
+    if len(model_id) > MAX_MODEL_ID_LEN:
+        raise HTTPException(400, f"model_id 长度不能超过 {MAX_MODEL_ID_LEN} 字符")
+
+    if not MODEL_ID_PATTERN.match(model_id):
+        raise HTTPException(400, "model_id 格式无效，应为 'owner/repo' 格式，仅允许字母、数字、下划线、连字符和点")
+
+    # 防止路径遍历
+    if '..' in model_id or model_id.startswith('/') or model_id.startswith('.'):
+        raise HTTPException(400, "model_id 包含非法字符")
+
+    return model_id
+
 @app.get("/api/model_specs")
 def get_model_specs(model_id: str, token: Optional[str] = None):
-    headers = {}
-    # if token:
-    #     headers["Authorization"] = f"Bearer {token}"
+    # 验证 model_id
+    model_id = validate_model_id(model_id)
 
+    headers = {}
     headers["Authorization"] = f"Bearer {SERVER_HF_TOKEN}"
 
     # 1. 直接调用 HuggingFace Model API (获取元数据 + Config)
@@ -206,6 +263,7 @@ async def read_robots():
 @app.get("/api/fetch_config")
 def fetch_config(model_id: str, token: Optional[str] = None):
     """兼容前端的 API 端点，实际调用 get_model_specs"""
+    # model_id 验证在 get_model_specs 中进行
     return get_model_specs(model_id, token)
 
 # 提供参数选项和默认值
