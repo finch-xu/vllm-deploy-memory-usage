@@ -50,59 +50,66 @@
     </script>
     <style>
         :root {
-            --p: #4f46e5;
+            --p: #475569;
             --bg: #f8fafc;
+            --border: #e2e8f0;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background: var(--bg);
-            padding: 20px;
-            color: #1e293b;
-            max-width: 800px;
+            padding: 12px;
+            color: #334155;
+            max-width: 720px;
             margin: 0 auto;
+            font-size: 14px;
         }
 
         .card {
             background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            margin: 0 0 12px 0;
+            color: #1e293b;
         }
 
         .input-group {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 8px;
+            margin-bottom: 12px;
         }
 
         input[type="text"] {
             flex: 1;
-            padding: 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 1rem;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
             outline: none;
-            transition: 0.2s;
         }
 
         input[type="text"]:focus {
-            border-color: var(--p);
+            border-color: #94a3b8;
         }
 
         button {
             background: var(--p);
             color: white;
             border: none;
-            padding: 0 25px;
-            border-radius: 8px;
-            font-weight: bold;
+            padding: 0 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 13px;
             cursor: pointer;
-            transition: 0.2s;
         }
 
         button:hover {
-            background: #4338ca;
+            background: #334155;
         }
 
         button:disabled {
@@ -112,108 +119,93 @@
 
         .tags {
             display: flex;
-            gap: 8px;
-            margin: 15px 0;
-            min-height: 24px;
+            gap: 6px;
+            margin: 8px 0;
+            min-height: 20px;
         }
 
         .tag {
-            font-size: 0.75rem;
-            padding: 4px 10px;
-            border-radius: 99px;
-            font-weight: bold;
-        }
-
-        .tag.moe {
-            background: #eff6ff;
-            color: #1d4ed8;
-        }
-
-        .tag.mla {
-            background: #f0fdf4;
-            color: #15803d;
-        }
-
-        .tag.fp8 {
-            background: #fffbeb;
-            color: #b45309;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+            background: #f1f5f9;
+            color: #64748b;
         }
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-top: 20px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 8px;
         }
 
         .box {
-            background: #f1f5f9;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid transparent;
-            transition: 0.2s;
+            background: #f8fafc;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
         }
 
         .box:focus-within {
-            border-color: #cbd5e1;
-            background: #fff;
+            border-color: #94a3b8;
         }
 
         label {
             display: block;
-            font-size: 0.75rem;
-            font-weight: bold;
+            font-size: 11px;
             color: #64748b;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         select,
         input[type="number"] {
             width: 100%;
-            padding: 8px;
+            padding: 5px 6px;
             border-radius: 4px;
-            border: 1px solid #cbd5e1;
+            border: 1px solid var(--border);
             box-sizing: border-box;
             background: white;
+            font-size: 12px;
         }
 
-        /* 大号参数量输入框 */
         .big-input {
             width: 100%;
             border: none;
             background: transparent;
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--p);
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1e293b;
             outline: none;
             padding: 0;
         }
 
-        /* 去掉数字输入框的小箭头(可选) */
-        /* input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; } */
-
         .result {
-            margin-top: 30px;
-            padding: 20px;
-            background: #eef2ff;
-            border-radius: 12px;
-            border: 1px solid #c7d2fe;
+            margin-top: 12px;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 6px;
+            border: 1px solid var(--border);
         }
 
         .row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 1.1rem;
+            margin-bottom: 6px;
+            font-size: 13px;
+            color: #475569;
         }
 
         .bar-con {
-            height: 24px;
+            height: 16px;
             background: #e2e8f0;
-            border-radius: 6px;
+            border-radius: 4px;
             overflow: hidden;
             display: flex;
-            margin: 15px 0;
+            margin: 8px 0;
         }
 
         .bar {
@@ -221,42 +213,67 @@
             transition: width 0.2s ease-out;
         }
 
-        /* 加快动画响应 */
         .err {
             color: #dc2626;
-            margin-top: 10px;
-            font-size: 0.9rem;
+            margin-top: 6px;
+            font-size: 12px;
         }
 
-        /* 多卡显示样式 */
         .gpu-card {
-            margin-top: 20px;
-            padding: 20px;
-            background: #eef2ff;
-            border-radius: 12px;
-            border: 1px solid #c7d2fe;
+            margin-top: 12px;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 6px;
+            border: 1px solid var(--border);
         }
 
         .gpu-card-title {
-            font-weight: bold;
-            font-size: 1.2rem;
-            color: var(--p);
-            margin-bottom: 15px;
+            font-weight: 600;
+            font-size: 13px;
+            color: #334155;
+            margin-bottom: 8px;
         }
 
         #multi_gpu_result {
-            margin-top: 30px;
+            margin-top: 12px;
         }
+
+        .calc-btn {
+            width: 100%;
+            padding: 10px;
+            margin-top: 12px;
+            font-size: 13px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 16px;
+            padding: 8px;
+            font-size: 12px;
+        }
+
+        footer a {
+            color: #64748b;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            color: #334155;
+        }
+
+        /* 状态颜色 - 只用于边框 */
+        .status-error { border-color: #f87171; background: #fef2f2; }
+        .status-warning { border-color: #fbbf24; background: #fffbeb; }
     </style>
 </head>
 
 <body>
 
     <div class="card">
-        <h2 style="color:var(--p); margin-top:0;">vLLM 显存计算器</h2>
+        <h2>vLLM 显存计算器</h2>
 
         <div class="input-group">
-            <input type="text" id="modelId" placeholder="输入HF模型ID" value="Qwen/Qwen3-4B-Instruct-2507" style="flex: 1;">
+            <input type="text" id="modelId" placeholder="输入HF模型ID" value="Qwen/Qwen3-4B-Instruct-2507">
             <button onclick="fetchData()" id="btnFetch">查询</button>
         </div>
         <div id="errorBox" class="err"></div>
@@ -266,10 +283,10 @@
 
             <div class="grid">
                 <div class="box">
-                    <label>总参数量 (Billion) - 可编辑</label>
-                    <div style="display:flex; align-items:baseline;">
+                    <label>参数量 (Billion)</label>
+                    <div style="display:flex; align-items:baseline; gap:4px;">
                         <input type="number" id="disp_params" class="big-input" value="0" step="0.01">
-                        <span style="font-weight:bold; color:var(--p)">B</span>
+                        <span style="font-weight:600; color:#64748b;">B</span>
                     </div>
                 </div>
                 <div class="box">
@@ -312,28 +329,21 @@
                 </div>
             </div>
 
-            <div style="margin: 25px 0;">
-                <button onclick="calc()"
-                    style="width: 100%; padding: 14px 30px; font-size: 1.1rem; background: var(--p); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);"
-                    onmouseover="this.style.background='#4338ca'; this.style.boxShadow='0 4px 12px rgba(79, 70, 229, 0.4)'"
-                    onmouseout="this.style.background='var(--p)'; this.style.boxShadow='0 2px 8px rgba(79, 70, 229, 0.3)'">
-                    🔄 计算显存
-                </button>
-            </div>
+            <button onclick="calc()" class="calc-btn">计算显存</button>
 
             <div id="result_container">
                 <!-- 单卡显示 -->
                 <div class="result" id="single_gpu_result">
                     <div class="bar-con">
-                        <div id="bw" class="bar" style="background:#3b82f6;width:0%"></div>
-                        <div id="bo" class="bar" style="background:#ef4444;width:0%"></div>
-                        <div id="bk" class="bar" style="background:#f59e0b;width:0%"></div>
+                        <div id="bw" class="bar" style="background:#64748b;width:0%"></div>
+                        <div id="bo" class="bar" style="background:#94a3b8;width:0%"></div>
+                        <div id="bk" class="bar" style="background:#cbd5e1;width:0%"></div>
                     </div>
-                    <div class="row"><span>📦 权重</span><span id="res_w">0 GB</span></div>
-                    <div class="row" style="color:#dc2626"><span>⚙️ 预留</span><span id="res_o">0 GB</span></div>
-                    <div class="row" style="color:#d97706"><span>🧠 KV Cache</span><span id="res_k">0 GB</span></div>
-                    <div class="row" style="border-top:1px solid #ccc; padding-top:10px; font-weight:bold;">
-                        <span>⚡ 总占用</span>
+                    <div class="row"><span>权重</span><span id="res_w">0 GB</span></div>
+                    <div class="row"><span>预留</span><span id="res_o">0 GB</span></div>
+                    <div class="row"><span>KV Cache</span><span id="res_k">0 GB</span></div>
+                    <div class="row" style="border-top:1px solid #e2e8f0; padding-top:6px; font-weight:600;">
+                        <span>总占用</span>
                         <span><span id="res_t">0</span> / <span id="res_limit">0</span> GB</span>
                     </div>
                 </div>
@@ -540,10 +550,10 @@
             // Tags
             const tags = document.getElementById('tagArea');
             tags.innerHTML = '';
-            if (G_Spec.is_moe) tags.innerHTML += `<span class="tag moe">MoE (${G_Spec.num_experts} Exp)</span>`;
-            if (G_Spec.is_mla) tags.innerHTML += `<span class="tag mla">MLA Enabled</span>`;
-            if (G_Spec.is_fp8) tags.innerHTML += `<span class="tag fp8">FP8 Config</span>`;
-            if (G_Spec.is_vl) tags.innerHTML += `<span class="tag moe" style="background:#e0f2fe;color:#0284c7">VL Model</span>`;
+            if (G_Spec.is_moe) tags.innerHTML += `<span class="tag">MoE (${G_Spec.num_experts} Exp)</span>`;
+            if (G_Spec.is_mla) tags.innerHTML += `<span class="tag">MLA</span>`;
+            if (G_Spec.is_fp8) tags.innerHTML += `<span class="tag">FP8</span>`;
+            if (G_Spec.is_vl) tags.innerHTML += `<span class="tag">VL</span>`;
 
             calc();
         }
@@ -623,17 +633,13 @@
                     document.getElementById('single_gpu_result').style.display = 'block';
                     document.getElementById('multi_gpu_result').style.display = 'none';
 
-                    // 根据状态设置卡片颜色
+                    // 根据状态设置卡片样式
                     const resultCard = document.getElementById('single_gpu_result');
+                    resultCard.className = 'result';
                     if (result.status === 'error') {
-                        resultCard.style.background = '#fee2e2';
-                        resultCard.style.borderColor = '#ef4444';
+                        resultCard.classList.add('status-error');
                     } else if (result.status === 'warning') {
-                        resultCard.style.background = '#fef3c7';
-                        resultCard.style.borderColor = '#f59e0b';
-                    } else {
-                        resultCard.style.background = '#eef2ff';
-                        resultCard.style.borderColor = '#c7d2fe';
+                        resultCard.classList.add('status-warning');
                     }
 
                     // 更新单卡显示
@@ -665,90 +671,43 @@
                     let po = (result.overhead.per_gpu / result.total_vram) * 100;
                     let pk = (result.kv_cache.per_gpu / result.total_vram) * 100;
 
-                    // 根据状态设置汇总卡片颜色
-                    let summaryBgColor, summaryBorderColor, summaryTextColor, summaryTitle;
-                    if (result.status === 'error') {
-                        summaryBgColor = '#fee2e2';
-                        summaryBorderColor = '#ef4444';
-                        summaryTextColor = '#991b1b';
-                        summaryTitle = `📊 多卡部署汇总 (TP=${tpSize}) ⚠️ ${result.status_text}`;
-                    } else if (result.status === 'warning') {
-                        summaryBgColor = '#fef3c7';
-                        summaryBorderColor = '#f59e0b';
-                        summaryTextColor = '#92400e';
-                        summaryTitle = `📊 多卡部署汇总 (TP=${tpSize}) ⚠️ ${result.status_text}`;
-                    } else {
-                        summaryBgColor = '#f0fdf4';
-                        summaryBorderColor = '#86efac';
-                        summaryTextColor = '#15803d';
-                        summaryTitle = `📊 多卡部署汇总 (TP=${tpSize})`;
-                    }
+                    // 状态样式类
+                    let statusClass = '';
+                    let statusText = result.status === 'error' ? ' - 显存不足' :
+                                     result.status === 'warning' ? ' - 显存紧张' : '';
+                    if (result.status === 'error') statusClass = 'status-error';
+                    else if (result.status === 'warning') statusClass = 'status-warning';
 
                     // 添加汇总卡片
                     const summaryCard = document.createElement('div');
-                    summaryCard.className = 'gpu-card';
-                    summaryCard.style.background = summaryBgColor;
-                    summaryCard.style.borderColor = summaryBorderColor;
+                    summaryCard.className = `gpu-card ${statusClass}`;
                     summaryCard.innerHTML = `
-                    <div class="gpu-card-title" style="color:${summaryTextColor};">${summaryTitle}</div>
-                    <div class="row" style="font-size:1.2rem; font-weight:bold; color:${summaryTextColor};">
-                        <span>🎮 GPU 数量</span>
-                        <span>${tpSize} 张</span>
-                    </div>
-                    <div class="row" style="font-size:1.1rem;">
-                        <span>💾 每卡显存占用</span>
-                        <span>${result.total_memory.per_gpu} GB / ${result.total_vram} GB</span>
-                    </div>
-                    <div class="row" style="font-size:1.1rem;">
-                        <span>📦 每卡权重</span>
-                        <span>${result.weights.per_gpu} GB</span>
-                    </div>
-                    <div class="row" style="font-size:1.1rem;">
-                        <span>⚙️ 每卡预留</span>
-                        <span>${result.overhead.per_gpu} GB</span>
-                    </div>
-                    <div class="row" style="font-size:1.1rem;">
-                        <span>🧠 每卡 KV Cache</span>
-                        <span>${result.kv_cache.per_gpu} GB</span>
-                    </div>
-                    <div class="row" style="border-top:2px solid ${summaryBorderColor}; padding-top:10px; margin-top:10px; font-size:1.2rem; font-weight:bold; color:${summaryTextColor};">
-                        <span>⚡ 总显存占用</span>
-                        <span>${result.total_memory.total} GB</span>
-                    </div>
-                    <div class="row" style="font-size:0.9rem; color:#64748b; margin-top:5px;">
-                        <span>💡 利用率</span>
-                        <span style="color:${summaryTextColor}; font-weight:bold;">${result.utilization}%</span>
+                    <div class="gpu-card-title">多卡部署 (TP=${tpSize})${statusText}</div>
+                    <div class="row"><span>GPU 数量</span><span>${tpSize} 张</span></div>
+                    <div class="row"><span>每卡显存</span><span>${result.total_memory.per_gpu} / ${result.total_vram} GB</span></div>
+                    <div class="row"><span>每卡权重</span><span>${result.weights.per_gpu} GB</span></div>
+                    <div class="row"><span>每卡预留</span><span>${result.overhead.per_gpu} GB</span></div>
+                    <div class="row"><span>每卡 KV Cache</span><span>${result.kv_cache.per_gpu} GB</span></div>
+                    <div class="row" style="border-top:1px solid #e2e8f0; padding-top:6px; font-weight:600;">
+                        <span>总显存 / 利用率</span>
+                        <span>${result.total_memory.total} GB / ${result.utilization}%</span>
                     </div>
                 `;
                     container.appendChild(summaryCard);
 
-                    // 统一显示方式：所有多卡配置都显示汇总信息和一个示例卡片
+                    // 单卡示例进度条
                     const exampleCard = document.createElement('div');
-                    exampleCard.className = 'gpu-card';
-
-                    // 根据状态设置示例卡片颜色
-                    if (result.status === 'error') {
-                        exampleCard.style.background = '#fee2e2';
-                        exampleCard.style.borderColor = '#ef4444';
-                    } else if (result.status === 'warning') {
-                        exampleCard.style.background = '#fef3c7';
-                        exampleCard.style.borderColor = '#f59e0b';
-                    }
-
+                    exampleCard.className = `gpu-card ${statusClass}`;
                     exampleCard.innerHTML = `
-                    <div class="gpu-card-title">🎮 单卡示例 (每张卡相同配置)</div>
+                    <div class="gpu-card-title">单卡示例</div>
                     <div class="bar-con">
-                        <div class="bar" style="background:#3b82f6;width:${Math.min(pw, 100)}%"></div>
-                        <div class="bar" style="background:#ef4444;width:${Math.min(po, 100)}%"></div>
-                        <div class="bar" style="background:#f59e0b;width:${Math.min(pk, 100)}%"></div>
+                        <div class="bar" style="background:#64748b;width:${Math.min(pw, 100)}%"></div>
+                        <div class="bar" style="background:#94a3b8;width:${Math.min(po, 100)}%"></div>
+                        <div class="bar" style="background:#cbd5e1;width:${Math.min(pk, 100)}%"></div>
                     </div>
-                    <div class="row"><span>📦 权重</span><span>${result.weights.per_gpu} GB</span></div>
-                    <div class="row" style="color:#dc2626"><span>⚙️ 预留</span><span>${result.overhead.per_gpu} GB</span></div>
-                    <div class="row" style="color:#d97706"><span>🧠 KV Cache</span><span>${result.kv_cache.per_gpu} GB</span></div>
-                    <div class="row" style="border-top:1px solid #ccc; padding-top:10px; font-weight:bold;">
-                        <span>⚡ 总占用</span>
-                        <span>${result.total_memory.per_gpu} / ${result.total_vram} GB</span>
-                    </div>
+                    <div class="row"><span>权重</span><span>${result.weights.per_gpu} GB</span></div>
+                    <div class="row"><span>预留</span><span>${result.overhead.per_gpu} GB</span></div>
+                    <div class="row"><span>KV Cache</span><span>${result.kv_cache.per_gpu} GB</span></div>
                 `;
                     container.appendChild(exampleCard);
                 }
@@ -764,17 +723,10 @@
         }
     </script>
 
-    <footer style="text-align: center; margin-top: 30px; padding: 20px; color: #64748b;">
-        <p style="margin: 0;">
-            <a href="https://github.com/finch-xu/vllm-deploy-memory-usage" target="_blank" rel="noopener noreferrer"
-                style="color: var(--p); text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 8px;">
-                <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                    <path
-                        d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
-                </svg>
-                finch-xu/vllm-deploy-memory-usage
-            </a>
-        </p>
+    <footer>
+        <a href="https://github.com/finch-xu/vllm-deploy-memory-usage" target="_blank" rel="noopener noreferrer">
+            GitHub: finch-xu/vllm-deploy-memory-usage
+        </a>
     </footer>
 
 </body>
